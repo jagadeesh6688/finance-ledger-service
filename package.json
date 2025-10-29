@@ -1,0 +1,54 @@
+{
+  "name": "finance-ledger-service",
+  "version": "1.0.0",
+  "description": "Financial Transaction Ledger Backend Service",
+  "main": "src/lambda.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod"
+  },
+  "keywords": [
+    "finance",
+    "ledger",
+    "graphql",
+    "apollo-server",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^5.0.0",
+    "apollo-server-lambda": "^3.7.0",
+    "apollo-server-core": "^3.7.0",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3",
+    "joi": "^17.9.0",
+    "winston": "^3.10.0",
+    "dotenv": "^16.3.0",
+    "graphql": "^16.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.0",
+    "eslint": "^8.50.0",
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0",
+    "supertest": "^6.3.0",
+    "mongodb-memory-server": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
+
