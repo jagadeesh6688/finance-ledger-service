@@ -1,0 +1,31 @@
+rules:
+
+- Use Node.js (ES2020+), Express.js, Apollo Server 5
+- Schemas must follow MongoDB best practices (normalize relationships, limit nesting, enforce indexes)
+- Limit code lines per file (split into models, controllers, resolvers, utils, handles)
+- Implement RBAC: Permissions enforced at GraphQL query/mutation level using middleware, decorators, or resolver composition
+- Always validate input (handle null/undefined, type checks, sanitize)
+- Error handling via utils (no direct try-catch in business logic)
+- Document every function using JSDoc; include usage, params, and expected output
+- Test cases for all models, key controllers, and permission logic (unit + integration)
+- Prefer async/await over callbacks/promises
+- Use consistent logging for all operations
+- Comments must explain non-trivial sections; flag for code review by CodeRabbit
+
+patterns:
+organization_schema: | - Collection: organizations - Fields: name, branches: [ref Branch], createdAt, updatedAt - Index: name - Methods: addBranch, getDetails
+
+branch_schema: | - Collection: branches - Fields: name, employees: [ref Employee], manager: ref Employee - Index: name
+
+employee_schema: | - Collection: employees - Fields: userId, name, branch, designation, manager, permissions, expenses: [ref Transaction] - Index: branch, manager
+
+transaction_schema: | - Collection: transactions - Fields: amount, type (credit/debit/refund/purchase), entity (employee/branch/vendor), createdAt, updatedAt - Index: entity, date, type
+
+vendor_schema: | - Collection: vendors - Fields: name, contact, transactions: [ref Transaction] - Index: name
+
+rbac: | - Define roles: Admin, BranchManager, Employee, Vendor - Middleware: permission check on query/mutation - Utils: isAuthorized(user, action)
+
+project_context: |
+Use strict TypeScript types for models if possible.
+Use “handles/” directory for error, permission, and validation handlers.
+Context-aware comments and test coverage for all core logic.
