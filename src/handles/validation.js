@@ -3,10 +3,10 @@
  * @module handles/validation
  */
 
-const Joi = require('joi');
-const mongoose = require('mongoose');
-const logger = require('../config/logger');
-const { ValidationError } = require('./errors');
+const Joi = require("joi");
+const mongoose = require("mongoose");
+const logger = require("../config/logger");
+const { ValidationError } = require("./errors");
 
 /**
  * Validate MongoDB ObjectId
@@ -27,12 +27,14 @@ const validateInput = async (data, schema) => {
   try {
     const { error, value } = await schema.validate(data, {
       abortEarly: false,
-      stripUnknown: true
+      stripUnknown: true,
     });
 
     if (error) {
-      const errorMessages = error.details.map(detail => detail.message).join(', ');
-      logger.warn('Validation failed:', errorMessages);
+      const errorMessages = error.details
+        .map((detail) => detail.message)
+        .join(", ");
+      logger.warn("Validation failed:", errorMessages);
       throw new ValidationError(errorMessages);
     }
 
@@ -41,8 +43,8 @@ const validateInput = async (data, schema) => {
     if (error instanceof ValidationError) {
       throw error;
     }
-    logger.error('Validation error:', error);
-    throw new ValidationError('Input validation failed');
+    logger.error("Validation error:", error);
+    throw new ValidationError("Input validation failed");
   }
 };
 
@@ -52,16 +54,16 @@ const validateInput = async (data, schema) => {
  * @returns {Object} Sanitized data
  */
 const sanitizeInput = (data) => {
-  if (!data || typeof data !== 'object') {
+  if (!data || typeof data !== "object") {
     return data;
   }
 
   const sanitized = {};
 
   for (const [key, value] of Object.entries(data)) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       sanitized[key] = value.trim();
-    } else if (typeof value === 'object' && value !== null) {
+    } else if (typeof value === "object" && value !== null) {
       sanitized[key] = sanitizeInput(value);
     } else {
       sanitized[key] = value;
@@ -74,6 +76,5 @@ const sanitizeInput = (data) => {
 module.exports = {
   validateObjectId,
   validateInput,
-  sanitizeInput
+  sanitizeInput,
 };
-

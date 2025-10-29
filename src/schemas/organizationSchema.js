@@ -3,14 +3,14 @@
  * @module schemas/organizationSchema
  */
 
-const Joi = require('joi');
+const Joi = require("joi");
 
 /**
  * Schema for creating organization
  */
 const createOrganizationSchema = Joi.object({
   name: Joi.string().required().trim().min(1).max(255),
-  branches: Joi.array().items(Joi.string().optional()).optional()
+  branches: Joi.array().items(Joi.string().optional()).optional(),
 });
 
 /**
@@ -18,11 +18,10 @@ const createOrganizationSchema = Joi.object({
  */
 const updateOrganizationSchema = Joi.object({
   name: Joi.string().trim().min(1).max(255).optional(),
-  branches: Joi.array().items(Joi.string()).optional()
+  branches: Joi.array().items(Joi.string()).optional(),
 });
 
 module.exports = {
   createOrganizationSchema,
-  updateOrganizationSchema
+  updateOrganizationSchema,
 };
-

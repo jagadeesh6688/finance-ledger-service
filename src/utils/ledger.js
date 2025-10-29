@@ -3,9 +3,9 @@
  * @module utils/ledger
  */
 
-const mongoose = require('mongoose');
-const logger = require('../config/logger');
-const { DatabaseError, ValidationError } = require('../handles/errors');
+const mongoose = require("mongoose");
+const logger = require("../config/logger");
+const { DatabaseError, ValidationError } = require("../handles/errors");
 
 /**
  * Calculate entity ledger (employee, branch, vendor, organization)
@@ -15,29 +15,34 @@ const { DatabaseError, ValidationError } = require('../handles/errors');
  * @param {Date} endDate - End date
  * @returns {Promise<Array>} Ledger entries
  */
-const calculateEntityLedger = async (entityType, entityId, startDate, endDate) => {
+const calculateEntityLedger = async (
+  entityType,
+  entityId,
+  startDate,
+  endDate
+) => {
   if (!entityType || !entityId) {
-    throw new ValidationError('Entity type and ID are required');
+    throw new ValidationError("Entity type and ID are required");
   }
 
   if (!startDate || !endDate) {
-    throw new ValidationError('Start and end dates are required');
+    throw new ValidationError("Start and end dates are required");
   }
 
   try {
-    const Transaction = mongoose.model('Transaction');
+    const Transaction = mongoose.model("Transaction");
 
     // Find all transactions for this entity
     const transactions = await Transaction.find({
-      'reference.refType': entityType,
-      'reference.refId': new mongoose.Types.ObjectId(entityId),
-      createdAt: { $gte: startDate, $lte: endDate }
+      "reference.refType": entityType,
+      "reference.refId": new mongoose.Types.ObjectId(entityId),
+      createdAt: { $gte: startDate, $lte: endDate },
     }).sort({ createdAt: -1 });
 
     return transactions;
   } catch (error) {
-    logger.error('Error calculating entity ledger:', error);
-    throw new DatabaseError('Failed to calculate ledger');
+    logger.error("Error calculating entity ledger:", error);
+    throw new DatabaseError("Failed to calculate ledger");
   }
 };
 
@@ -49,17 +54,17 @@ const calculateEntityLedger = async (entityType, entityId, startDate, endDate) =
 const calculateRunningBalance = (transactions) => {
   let runningBalance = 0;
 
-  return transactions.map(transaction => {
+  return transactions.map((transaction) => {
     // Adjust balance based on transaction type
-    if (transaction.type === 'debit' || transaction.type === 'purchase') {
+    if (transaction.type === "debit" || transaction.type === "purchase") {
       runningBalance += transaction.amount;
-    } else if (transaction.type === 'credit' || transaction.type === 'refund') {
+    } else if (transaction.type === "credit" || transaction.type === "refund") {
       runningBalance -= transaction.amount;
     }
 
     return {
       ...transaction.toObject(),
-      runningBalance
+      runningBalance,
     };
   });
 };
@@ -70,27 +75,30 @@ const calculateRunningBalance = (transactions) => {
  * @param {string} period - 'day', 'week', or 'month'
  * @returns {Object} Aggregated data
  */
-const aggregateByPeriod = (transactions, period = 'day') => {
+const aggregateByPeriod = (transactions, period = "day") => {
   const aggregated = {};
 
-  transactions.forEach(transaction => {
+  transactions.forEach((transaction) => {
     const date = new Date(transaction.createdAt);
     let key;
 
     switch (period) {
-      case 'day':
-        key = date.toISOString().split('T')[0];
+      case "day":
+        key = date.toISOString().split("T")[0];
         break;
-      case 'week':
+      case "week":
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
-        key = weekStart.toISOString().split('T')[0];
+        key = weekStart.toISOString().split("T")[0];
         break;
-      case 'month':
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      case "month":
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}`;
         break;
       default:
-        key = date.toISOString().split('T')[0];
+        key = date.toISOString().split("T")[0];
     }
 
     if (!aggregated[key]) {
@@ -98,7 +106,7 @@ const aggregateByPeriod = (transactions, period = 'day') => {
         date: key,
         totalAmount: 0,
         count: 0,
-        transactions: []
+        transactions: [],
       };
     }
 
@@ -107,8 +115,8 @@ const aggregateByPeriod = (transactions, period = 'day') => {
     aggregated[key].transactions.push(transaction);
   });
 
-  return Object.values(aggregated).sort((a, b) => 
-    new Date(a.date) - new Date(b.date)
+  return Object.values(aggregated).sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
   );
 };
 
@@ -120,56 +128,59 @@ const aggregateByPeriod = (transactions, period = 'day') => {
  */
 const generateBalanceSheet = async (orgId, date) => {
   try {
-    const Account = mongoose.model('Account');
+    const Account = mongoose.model("Account");
 
     // Get all asset accounts
     const assets = await Account.find({
-      accountType: 'asset',
-      'entity.entityType': 'organization',
-      'entity.entityId': new mongoose.Types.ObjectId(orgId)
+      accountType: "asset",
+      "entity.entityType": "organization",
+      "entity.entityId": new mongoose.Types.ObjectId(orgId),
     });
 
     // Get all liability accounts
     const liabilities = await Account.find({
-      accountType: 'liability',
-      'entity.entityType': 'organization',
-      'entity.entityId': new mongoose.Types.ObjectId(orgId)
+      accountType: "liability",
+      "entity.entityType": "organization",
+      "entity.entityId": new mongoose.Types.ObjectId(orgId),
     });
 
     // Get all equity accounts
     const equity = await Account.find({
-      accountType: 'equity',
-      'entity.entityType': 'organization',
-      'entity.entityId': new mongoose.Types.ObjectId(orgId)
+      accountType: "equity",
+      "entity.entityType": "organization",
+      "entity.entityId": new mongoose.Types.ObjectId(orgId),
     });
 
     const totalAssets = assets.reduce((sum, acc) => sum + acc.balance, 0);
-    const totalLiabilities = liabilities.reduce((sum, acc) => sum + acc.balance, 0);
+    const totalLiabilities = liabilities.reduce(
+      (sum, acc) => sum + acc.balance,
+      0
+    );
     const totalEquity = equity.reduce((sum, acc) => sum + acc.balance, 0);
 
     const balanceSheet = {
       asOfDate: date,
       assets: {
         accounts: assets,
-        total: totalAssets
+        total: totalAssets,
       },
       liabilities: {
         accounts: liabilities,
-        total: totalLiabilities
+        total: totalLiabilities,
       },
       equity: {
         accounts: equity,
-        total: totalEquity
+        total: totalEquity,
       },
-      balance: totalAssets === (totalLiabilities + totalEquity)
+      balance: totalAssets === totalLiabilities + totalEquity,
     };
 
     logger.info(`Balance sheet generated for org ${orgId} on ${date}`);
 
     return balanceSheet;
   } catch (error) {
-    logger.error('Error generating balance sheet:', error);
-    throw new DatabaseError('Failed to generate balance sheet');
+    logger.error("Error generating balance sheet:", error);
+    throw new DatabaseError("Failed to generate balance sheet");
   }
 };
 
@@ -182,21 +193,21 @@ const generateBalanceSheet = async (orgId, date) => {
  */
 const generateIncomeStatement = async (orgId, startDate, endDate) => {
   try {
-    const Account = mongoose.model('Account');
-    const Transaction = mongoose.model('Transaction');
+    const Account = mongoose.model("Account");
+    const Transaction = mongoose.model("Transaction");
 
     // Get revenue accounts
     const revenueAccounts = await Account.find({
-      accountType: 'revenue',
-      'entity.entityType': 'organization',
-      'entity.entityId': new mongoose.Types.ObjectId(orgId)
+      accountType: "revenue",
+      "entity.entityType": "organization",
+      "entity.entityId": new mongoose.Types.ObjectId(orgId),
     });
 
     // Get expense accounts
     const expenseAccounts = await Account.find({
-      accountType: 'expense',
-      'entity.entityType': 'organization',
-      'entity.entityId': new mongoose.Types.ObjectId(orgId)
+      accountType: "expense",
+      "entity.entityType": "organization",
+      "entity.entityId": new mongoose.Types.ObjectId(orgId),
     });
 
     // Calculate revenue
@@ -209,21 +220,21 @@ const generateIncomeStatement = async (orgId, startDate, endDate) => {
       period: { startDate, endDate },
       revenue: {
         accounts: revenueAccounts,
-        total: revenue
+        total: revenue,
       },
       expenses: {
         accounts: expenseAccounts,
-        total: expenses
+        total: expenses,
       },
-      netIncome: revenue - expenses
+      netIncome: revenue - expenses,
     };
 
     logger.info(`Income statement generated for org ${orgId}`);
 
     return incomeStatement;
   } catch (error) {
-    logger.error('Error generating income statement:', error);
-    throw new DatabaseError('Failed to generate income statement');
+    logger.error("Error generating income statement:", error);
+    throw new DatabaseError("Failed to generate income statement");
   }
 };
 
@@ -232,6 +243,5 @@ module.exports = {
   calculateRunningBalance,
   aggregateByPeriod,
   generateBalanceSheet,
-  generateIncomeStatement
+  generateIncomeStatement,
 };
-
